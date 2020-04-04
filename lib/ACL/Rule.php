@@ -27,6 +27,7 @@ use Sabre\Xml\Reader;
 use Sabre\Xml\Writer;
 use Sabre\Xml\XmlDeserializable;
 use Sabre\Xml\XmlSerializable;
+use OCP\Constants;
 
 class Rule implements XmlSerializable, XmlDeserializable, \JsonSerializable {
 	const ACL = '{http://nextcloud.org/ns}acl';
@@ -78,6 +79,20 @@ class Rule implements XmlSerializable, XmlDeserializable, \JsonSerializable {
 		// a bitmask that has all allow bits set to 1 and all inherit and deny bits to 0
 		$allowMask = $this->mask & $this->permissions;
 		return $permissions | $allowMask;
+	}
+
+	//Ma fonction a moi me permettant de forcer lhinerit sur write et sur delete
+	public function applyPermissionsWithForceDeleteWriteInherit(int $permissions) {
+		$invertedMask = (~$this->mask) | Constants::PERMISSION_DELETE;
+		// create a bitmask that has all inherit and allow bits set to 1 and all deny bits to 0
+		$denyMask = $invertedMask | $this->permissions;
+
+		$permissions = $permissions & $denyMask;
+
+		// a bitmask that has all allow bits set to 1 and all inherit and deny bits to 0
+		$allowMask = (~$invertedMask) & $this->permissions;
+		$test= $permissions | $allowMask;
+		return $test;
 	}
 
 	function xmlSerialize(Writer $writer) {
