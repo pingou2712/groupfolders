@@ -113,10 +113,20 @@ class ACLManager {
 		$path = ltrim($path, '/');
 		$rules = $this->getRules($this->getParents($path));
 
-		return array_reduce($rules, function (int $permissions, array $rules) {
-			$mergedRule = Rule::mergeRules($rules);
-			return $mergedRule->applyPermissions($permissions);
+		//MA MODIF: Pour la permission delete, write, elle ne depends que du/des dossier parent et non de sa propre permission (afin de supprimer les dossier ou de les renomé ou de foutre le bordel a linterieur en créant des fichier).
+		//TO DO : NE LE FAIRE QUE POUR LES DOSSIER!!! Pfff raz le cul et ca me sert a rien
+		$rules_modif =  array_slice($rules,0,count($rules)-1);
+
+		//Pour tous sauf le dernier, on fait comme dhab!!
+		$test = array_reduce($rules_modif,function (int $permissions, array $rules)
+		{
+		$mergedRule = Rule::mergeRules($rules);
+		return $mergedRule->applyPermissions($permissions);
 		}, Constants::PERMISSION_ALL);
+
+		//Par contre pour le dernier:
+		$mergedRule = Rule::mergeRules(end($rules));
+		return $mergedRule->applyPermissionsWithForceDeleteWriteInherit($test);
 	}
 
 	/**
