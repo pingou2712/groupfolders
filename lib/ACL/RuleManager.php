@@ -295,6 +295,40 @@ class RuleManager {
 		}
 	}
 
+	private function hasRule_moi(array $data): bool {
+		$query = $this->connection->getQueryBuilder();
+		$query->select('fileid')
+			->from('group_folders_acl')
+			->where($query->expr()->eq('fileid', $query->createNamedParameter($data['fileid'], IQueryBuilder::PARAM_INT)))
+			->andWhere($query->expr()->eq('mapping_type', $query->createNamedParameter($data['mapping_type'])))
+			->andWhere($query->expr()->eq('mapping_id', $query->createNamedParameter($data['mapping_id'])));
+		return (bool)$query->execute()->fetch();
+	}
+
+	public function saveRule_moi(array $data) {
+		if ($this->hasRule_moi($data)) {
+			$query = $this->connection->getQueryBuilder();
+			$query->update('group_folders_acl')
+				->set('mask', $query->createNamedParameter($data['mask'], IQueryBuilder::PARAM_INT))
+				->set('permissions', $query->createNamedParameter($data['permissions'], IQueryBuilder::PARAM_INT))
+				->where($query->expr()->eq('fileid', $query->createNamedParameter($data['fileid'], IQueryBuilder::PARAM_INT)))
+				->andWhere($query->expr()->eq('mapping_type', $query->createNamedParameter($data['mapping_type'])))
+				->andWhere($query->expr()->eq('mapping_id', $query->createNamedParameter($data['mapping_id'])));
+			$query->execute();
+		} else {
+			$query = $this->connection->getQueryBuilder();
+			$query->insert('group_folders_acl')
+				->values([
+					'fileid' => $query->createNamedParameter($data['fileid'], IQueryBuilder::PARAM_INT),
+					'mapping_type' => $query->createNamedParameter($data['mapping_type']),
+					'mapping_id' => $query->createNamedParameter($data['mapping_id']),
+					'mask' => $query->createNamedParameter($data['mask'], IQueryBuilder::PARAM_INT),
+					'permissions' => $query->createNamedParameter($data['permissions'], IQueryBuilder::PARAM_INT)
+				]);
+			$query->execute();
+		}
+	}
+
 	public function deleteRule(Rule $rule) {
 		$query = $this->connection->getQueryBuilder();
 		$query->delete('group_folders_acl')
